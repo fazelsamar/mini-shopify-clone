@@ -1,5 +1,6 @@
 from uuid import uuid4
 from django.db import models
+from django.utils.text import slugify
 from django.core.validators import MinValueValidator
 from django.contrib.auth import get_user_model
 
@@ -18,7 +19,7 @@ class Collection(models.Model):
 
 class Product(models.Model):
     title = models.CharField(max_length=255)
-    slug = models.SlugField()
+    slug = models.SlugField(unique=True)
     description = models.TextField(null=True, blank=True)
     unit_price = models.DecimalField(
         max_digits=6,
@@ -32,6 +33,10 @@ class Product(models.Model):
 
     class Meta:
         ordering = ['title']
+
+    def save(self, *args, **kwargs) -> None:
+        self.slug = slugify(self.title)
+        return super().save(*args, **kwargs)
 
 
 class ProductImage(models.Model):
