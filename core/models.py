@@ -1,9 +1,9 @@
 from django.contrib.auth.models import (
-    BaseUserManager, AbstractUser
+    AbstractUser, UserManager as AbstractUserManager
 )
 
 
-class MyUserManager(BaseUserManager):
+class MyUserManager(AbstractUserManager):
     def create_user(self, username, password):
         """
         Creates and saves a User with the given username and password.
