@@ -1,3 +1,4 @@
+from django.utils.text import slugify
 from rest_framework import serializers
 
 from . import models
@@ -40,3 +41,8 @@ class ProductSerializer(serializers.ModelSerializer):
             'last_update',
             'images',
         ]
+
+    def validate_title(self, value):
+        if models.Product.objects.filter(slug=slugify(value)).exists():
+            raise serializers.ValidationError('A product with this title is already exists.')
+        return value
