@@ -1,0 +1,43 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres
+    container_name: postgres
+    volumes:
+      - ./db_files:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres_aefjawef32234234
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: .
+    command: ./wait-for-it.sh postgres:5432 -- ./docker-entrypoint.sh
+    volumes:
+      - ./:/app/
+      - ./staticfiles:/app/staticfiles
+      - ./mediafiles:/app/mediafiles
+    environment:
+      - IS_POSTGRESQL=1
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres_aefjawef32234234
+    depends_on:
+      - postgres
+    expose:
+      - 8000
+
+  nginx:
+    build:
+      context: ./nginx/
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - ./staticfiles:/home/app/staticfiles
+      - ./mediafiles:/home/app/mediafiles
+    depends_on:
+      - backend
