@@ -3,3 +3,6 @@ db.sqlite3
 /staticfiles
 /mediafiles
 /db_files
+*.pyc
+__pycache__/
+**/__pycache__/*

@@ -122,6 +122,7 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Order
         fields = ['id', 'user', 'placed_at', 'orderitems']
+        read_only_fields = ['user']
 
 
 class CreateOrderSerializer(serializers.Serializer):
