@@ -72,3 +72,33 @@ class CartItemViewSet(ModelViewSet):
         return models.CartItem.objects \
             .filter(cart_id=self.kwargs['cart_pk']) \
             .prefetch_related('product')
+
+
+class OrderViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'delete', 'head', 'options']
+
+    def get_permissions(self):
+        if self.request.method in ['DELETE']:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+    
+    def create(self, request, *args, **kwargs):
+        serializer = serializers.CreateOrderSerializer(
+            data=request.data,
+            context={'user': self.request.user},
+        )
+        serializer.is_valid(raise_exception=True)
+        order = serializer.save()
+        serializer = serializers.OrderSerializer(order)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return serializers.CreateOrderSerializer
+        return serializers.OrderSerializer
+        
+    def get_queryset(self):
+        user =self.request.user
+        if user.is_staff:
+            return models.Order.objects.all().prefetch_related('orderitems')
+        return models.Order.objects.filter(user=user).prefetch_related('orderitems')

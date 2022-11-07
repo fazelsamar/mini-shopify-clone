@@ -1,3 +1,6 @@
+from decimal import Decimal
+
+from django.db import transaction
 from django.utils.text import slugify
 from rest_framework import serializers
 
@@ -105,3 +108,50 @@ class UpdateCartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.CartItem
         fields = ['quantity']
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    product = SimpleProductSerializer()
+    class Meta:
+        model = models.OrderItem
+        fields = ['id', 'product', 'quantity', 'unit_price']
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    orderitems = OrderItemSerializer(many=True, read_only=True)
+    class Meta:
+        model = models.Order
+        fields = ['id', 'user', 'placed_at', 'orderitems']
+
+
+class CreateOrderSerializer(serializers.Serializer):
+    cart_id = serializers.UUIDField()
+
+    def validate_cart_id(self, cart_id):
+        if not models.Cart.objects.filter(id=cart_id).exists():
+            raise serializers.ValidationError('No cart with given ID was found')
+
+        if models.CartItem.objects.filter(cart_id=cart_id).count() == 0:
+            raise serializers.ValidationError('The given cart has no items')
+        return cart_id
+
+    def save(self, **kwargs):
+        with transaction.atomic():
+            order = models.Order.objects.create(user=self.context['user'])
+
+            cartitems = models.CartItem.objects.filter(cart_id=self.validated_data['cart_id'])
+
+            orderitems = [
+                models.OrderItem(
+                    order=order,
+                    product=cartitem.product,
+                    quantity=cartitem.quantity,
+                    unit_price=cartitem.product.unit_price,
+                ) for cartitem in cartitems
+            ]
+
+            models.OrderItem.objects.bulk_create(orderitems)
+
+            models.Cart.objects.get(id=self.validated_data['cart_id']).delete()
+
+            return order
