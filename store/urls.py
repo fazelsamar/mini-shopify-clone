@@ -4,8 +4,12 @@ from . import views
 router = routers.DefaultRouter()
 router.register('products', views.ProductViewSet, basename='products')
 router.register('collections', views.CollectionViewSet, basename='collections')
+router.register('carts', views.CartViewSet, basename='carts')
 
 products_router = routers.NestedSimpleRouter(router, 'products', lookup='product')
 products_router.register('images', views.ProductImageViewSet, basename='product-images')
 
-urlpatterns = router.urls + products_router.urls
+carts_router = routers.NestedSimpleRouter(router, 'carts', lookup='cart')
+carts_router.register('items', views.CartItemViewSet, basename='cart-items')
+
+urlpatterns = router.urls + products_router.urls + carts_router.urls
