@@ -37,6 +37,7 @@ class CollectionViewSet(ModelViewSet):
 
 class ProductImageViewSet(ModelViewSet):
     serializer_class = serializers.ProductImageSerializer
+    permission_classes = [DjangoModelPermissionsOrAnonReadOnly]
 
     def get_queryset(self):
         return models.ProductImage.objects.filter(product_id=self.kwargs['product_pk'])
